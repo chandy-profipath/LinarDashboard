@@ -1,10 +1,10 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Truck, Inquiry } from '@/types';
-import { 
-  TrendingUp, 
-  TrendingDown, 
-  DollarSign, 
+import {
+  TrendingUp,
+  TrendingDown,
+  PoundSterling,
   Truck as TruckIcon,
   Package,
   Globe,
@@ -125,7 +125,7 @@ const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ isDark }) => {
         `}>
           <div className="flex items-center justify-between mb-3">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-400 to-blue-600 flex items-center justify-center">
-              <DollarSign className="w-5 h-5 text-white" />
+              <PoundSterling className="w-5 h-5 text-white" />
             </div>
             <span className="flex items-center gap-1 text-xs text-green-400">
               <TrendingUp className="w-3 h-3" /> +12%
@@ -214,7 +214,7 @@ const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ isDark }) => {
                       </span>
                     </div>
                     <div className={`h-3 rounded-full overflow-hidden ${isDark ? 'bg-slate-700' : 'bg-gray-100'}`}>
-                      <div 
+                      <div
                         className={`h-full rounded-full bg-gradient-to-r ${brandColors[idx % brandColors.length]} transition-all duration-1000`}
                         style={{ width: `${percentage}%` }}
                       />
@@ -242,7 +242,7 @@ const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ isDark }) => {
                   const available = (analytics.statusCounts.available / total) * 100;
                   const sold = (analytics.statusCounts.sold / total) * 100;
                   const reserved = (analytics.statusCounts.reserved / total) * 100;
-                  
+
                   let offset = 0;
                   const segments = [
                     { value: available, color: '#10B981' },
@@ -415,7 +415,7 @@ const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ isDark }) => {
             return (
               <div key={month} className="flex-1 flex flex-col items-center gap-2 group">
                 <div className="relative w-full">
-                  <div 
+                  <div
                     className="w-full bg-gradient-to-t from-cyan-500 to-blue-500 rounded-t-lg transition-all duration-500 group-hover:from-cyan-400 group-hover:to-blue-400"
                     style={{ height: `${height * 2}px` }}
                   />

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Truck, MessageSquare, DollarSign, UserPlus, Clock } from 'lucide-react';
+import { Truck, MessageSquare, PoundSterling, UserPlus, Clock } from 'lucide-react';
 
 interface Activity {
   id: string;
@@ -56,7 +56,7 @@ const RecentActivity: React.FC<RecentActivityProps> = ({ isDark }) => {
     switch (type) {
       case 'truck_added': return { icon: Truck, color: 'bg-cyan-500/20 text-cyan-400' };
       case 'inquiry': return { icon: MessageSquare, color: 'bg-purple-500/20 text-purple-400' };
-      case 'sale': return { icon: DollarSign, color: 'bg-green-500/20 text-green-400' };
+      case 'sale': return { icon: PoundSterling, color: 'bg-green-500/20 text-green-400' };
       case 'user': return { icon: UserPlus, color: 'bg-orange-500/20 text-orange-400' };
       default: return { icon: Clock, color: 'bg-gray-500/20 text-gray-400' };
     }
