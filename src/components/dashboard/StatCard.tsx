@@ -29,7 +29,7 @@ const StatCard: React.FC<StatCardProps> = ({
     const steps = 60;
     const increment = value / steps;
     let current = 0;
-
+    
     const timer = setInterval(() => {
       current += increment;
       if (current >= value) {
@@ -85,8 +85,8 @@ const StatCard: React.FC<StatCardProps> = ({
   const colors = colorClasses[color];
 
   const formatValue = (val: number) => {
-    if (prefix === '£' || prefix === '$') {
-      return val.toLocaleString();
+    if (prefix === '$') {
+      return val.toLocaleString('en-US');
     }
     return val.toLocaleString();
   };
@@ -94,8 +94,8 @@ const StatCard: React.FC<StatCardProps> = ({
   return (
     <div className={`
       relative overflow-hidden rounded-2xl p-6
-      ${isDark
-        ? 'bg-slate-800/50 border border-slate-700/50'
+      ${isDark 
+        ? 'bg-slate-800/50 border border-slate-700/50' 
         : 'bg-white border border-gray-200'
       }
       backdrop-blur-xl shadow-xl ${colors.shadow}
@@ -104,7 +104,7 @@ const StatCard: React.FC<StatCardProps> = ({
     `}>
       {/* Background Gradient */}
       <div className={`absolute inset-0 bg-gradient-to-br ${colors.bg} opacity-50`} />
-
+      
       {/* Content */}
       <div className="relative">
         <div className="flex items-start justify-between mb-4">
@@ -115,12 +115,12 @@ const StatCard: React.FC<StatCardProps> = ({
           `}>
             <Icon className="w-6 h-6 text-white" />
           </div>
-
+          
           {trend !== undefined && (
             <div className={`
               flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium
-              ${trend >= 0
-                ? 'bg-emerald-500/20 text-emerald-400'
+              ${trend >= 0 
+                ? 'bg-emerald-500/20 text-emerald-400' 
                 : 'bg-red-500/20 text-red-400'
               }
             `}>
@@ -137,7 +137,7 @@ const StatCard: React.FC<StatCardProps> = ({
         <h3 className={`text-sm font-medium mb-1 ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
           {title}
         </h3>
-
+        
         <p className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
           {prefix}{formatValue(displayValue)}{suffix}
         </p>

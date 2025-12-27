@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Truck, TRUCK_BRANDS, FUEL_TYPES, TRANSMISSIONS, TRUCK_STATUS } from '@/types';
 import { supabase } from '@/lib/supabase';
-import { X, Upload, Loader2, ImagePlus, Trash2 } from 'lucide-react';
+import { X, Upload, Loader2, ImagePlus } from 'lucide-react';
 
 interface TruckModalProps {
   isOpen: boolean;
@@ -30,17 +30,8 @@ const TruckModal: React.FC<TruckModalProps> = ({ isOpen, onClose, truck, isDark,
     status: 'available' as 'available' | 'sold' | 'reserved',
     main_image: '',
     image1: '',
-    image2: '',
-    image3: '',
-    image4: '',
-    image5: '',
-    image6: '',
-    image7: '',
-    image8: '',
-    image9: '',
-    features: [] as string[]
+    image2: ''
   });
-  const [featuresInput, setFeaturesInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [uploadingImage, setUploadingImage] = useState<string | null>(null);
   const [error, setError] = useState('');
@@ -66,17 +57,8 @@ const TruckModal: React.FC<TruckModalProps> = ({ isOpen, onClose, truck, isDark,
           status: truck.status,
           main_image: truck.main_image || '',
           image1: truck.image1 || '',
-          image2: truck.image2 || '',
-          image3: truck.image3 || '',
-          image4: truck.image4 || '',
-          image5: truck.image5 || '',
-          image6: truck.image6 || '',
-          image7: truck.image7 || '',
-          image8: truck.image8 || '',
-          image9: truck.image9 || '',
-          features: truck.features || []
+          image2: truck.image2 || ''
         });
-        setFeaturesInput((truck.features || []).join('\n'));
       } else {
         setFormData({
           tuuid: crypto.randomUUID(),
@@ -96,17 +78,8 @@ const TruckModal: React.FC<TruckModalProps> = ({ isOpen, onClose, truck, isDark,
           status: 'available',
           main_image: '',
           image1: '',
-          image2: '',
-          image3: '',
-          image4: '',
-          image5: '',
-          image6: '',
-          image7: '',
-          image8: '',
-          image9: '',
-          features: []
+          image2: ''
         });
-        setFeaturesInput('');
       }
     }
   }, [truck, isOpen]);
@@ -125,49 +98,14 @@ const TruckModal: React.FC<TruckModalProps> = ({ isOpen, onClose, truck, isDark,
     setFormData(prev => ({ ...prev, [imageField]: objectUrl })); // Show preview
 
     setUploadingImage(imageField);
-    setError('');
+    setError(''); // Clear previous errors
 
     try {
-      const cleanTuuid = formData.tuuid.trim().replace(/^\/|\/$/g, '');
-
-      // 1. Force cleanup of any existing files for this field
-      // Dual approach: folder listing + current URL path parsing
-      const { data: existingFiles, error: listError } = await supabase.storage
-        .from('truckimages')
-        .list(cleanTuuid);
-
-      let filesToCleanup: string[] = [];
-
-      if (!listError && existingFiles) {
-        filesToCleanup = existingFiles
-          .filter(f => f.name.startsWith(`${imageField}.`))
-          .map(f => `${cleanTuuid}/${f.name}`);
-      }
-
-      const currentUrl = formData[imageField as keyof typeof formData] as string;
-      if (currentUrl && currentUrl.includes('/truckimages/')) {
-        const urlParts = currentUrl.split('/truckimages/');
-        if (urlParts.length > 1) {
-          const urlPath = urlParts[1].split('?')[0];
-          if (!filesToCleanup.includes(urlPath)) {
-            filesToCleanup.push(urlPath);
-          }
-        }
-      }
-
-      if (filesToCleanup.length > 0) {
-        console.log(`Cleaning up storage before upload for ${imageField}:`, filesToCleanup);
-        const { error: removeError } = await supabase.storage
-          .from('truckimages')
-          .remove(filesToCleanup);
-        if (removeError) console.error('Cleanup error:', removeError);
-      }
-
       const fileExt = file.name.split('.').pop();
       const fileName = `${imageField}.${fileExt}`;
-      const filePath = `${cleanTuuid}/${fileName}`;
+      const filePath = `${formData.tuuid}/${fileName}`;
 
-      // 2. Upload to Supabase
+      // Upload to Supabase
       const { data, error: uploadError } = await supabase.storage
         .from('truckimages')
         .upload(filePath, file, {
@@ -175,81 +113,27 @@ const TruckModal: React.FC<TruckModalProps> = ({ isOpen, onClose, truck, isDark,
           upsert: true
         });
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        throw uploadError;
+      }
 
-      // 3. Get Public URL
+      // Get Public URL
       const { data: UrlData } = supabase.storage
         .from('truckimages')
         .getPublicUrl(filePath);
 
       if (!UrlData.publicUrl) {
-        throw new Error('Could not get image link.');
+        throw new Error('Could not get image link. Please try again.');
       }
 
-      const cacheBustedUrl = `${UrlData.publicUrl}?t=${Date.now()}`;
-      setFormData(prev => ({ ...prev, [imageField]: cacheBustedUrl }));
+      // Update state with valid Public URL
+      setFormData(prev => ({ ...prev, [imageField]: UrlData.publicUrl }));
 
     } catch (err: any) {
       console.error('Upload error:', err);
+      // Revert the preview if upload failed
       setFormData(prev => ({ ...prev, [imageField]: '' }));
-      setError(`Upload notice: ${err.message || 'The image could not be uploaded.'}`);
-    } finally {
-      setUploadingImage(null);
-    }
-  };
-
-  const handleRemoveImage = async (imageField: string) => {
-    if (!formData.tuuid) return;
-
-    try {
-      setUploadingImage(imageField);
-      const cleanTuuid = formData.tuuid.trim().replace(/^\/|\/$/g, '');
-      let filesToCleanup: string[] = [];
-
-      // 1. Get path from the current URL (precise fallback)
-      const currentUrl = formData[imageField as keyof typeof formData] as string;
-      if (currentUrl && currentUrl.includes('/truckimages/')) {
-        const urlParts = currentUrl.split('/truckimages/');
-        if (urlParts.length > 1) {
-          const urlPath = urlParts[1].split('?')[0];
-          filesToCleanup.push(urlPath);
-        }
-      }
-
-      // 2. List folder files (redundancy)
-      const { data: files, error: listError } = await supabase.storage
-        .from('truckimages')
-        .list(cleanTuuid);
-
-      if (!listError && files) {
-        files.forEach(f => {
-          if (f.name.startsWith(`${imageField}.`)) {
-            const path = `${cleanTuuid}/${f.name}`;
-            if (!filesToCleanup.includes(path)) {
-              filesToCleanup.push(path);
-            }
-          }
-        });
-      }
-
-      if (filesToCleanup.length > 0) {
-        console.log(`Removing files from storage:`, filesToCleanup);
-        const { error: removeError } = await supabase.storage
-          .from('truckimages')
-          .remove(filesToCleanup);
-
-        if (removeError) {
-          console.error('Storage remove error:', removeError);
-          throw removeError;
-        }
-        console.log(`Storage deletion successful.`);
-      }
-
-      setFormData(prev => ({ ...prev, [imageField]: '' }));
-    } catch (err: any) {
-      console.error('Removal error:', err);
-      setFormData(prev => ({ ...prev, [imageField]: '' }));
-      setError(`Notice: Image cleared from form. Storage cleanup result: ${err.message || 'Check console'}`);
+      setError('Could not upload the image. Please try another one.');
     } finally {
       setUploadingImage(null);
     }
@@ -262,13 +146,6 @@ const TruckModal: React.FC<TruckModalProps> = ({ isOpen, onClose, truck, isDark,
 
     try {
       const brand = formData.brand === 'Custom' ? formData.customBrand : formData.brand;
-
-      // Parse features from input string
-      const finalFeatures = featuresInput
-        .split(/,|\n/)
-        .map(f => f.trim())
-        .filter(f => f !== '')
-        .slice(0, 20);
 
       const truckData = {
         tuuid: formData.tuuid,
@@ -288,14 +165,6 @@ const TruckModal: React.FC<TruckModalProps> = ({ isOpen, onClose, truck, isDark,
         main_image: formData.main_image,
         image1: formData.image1,
         image2: formData.image2,
-        image3: formData.image3,
-        image4: formData.image4,
-        image5: formData.image5,
-        image6: formData.image6,
-        image7: formData.image7,
-        image8: formData.image8,
-        image9: formData.image9,
-        features: finalFeatures,
         updated_at: new Date().toISOString()
       };
 
@@ -315,25 +184,7 @@ const TruckModal: React.FC<TruckModalProps> = ({ isOpen, onClose, truck, isDark,
       onSave();
       onClose();
     } catch (err: any) {
-      console.error('Detailed Save Error:', {
-        message: err.message,
-        details: err.details,
-        hint: err.hint,
-        code: err.code,
-        fullError: err
-      });
-
-      let errorMsg = 'Could not save the truck details.';
-      if (err.message) {
-        errorMsg += ` Reason: ${err.message}`;
-        if (err.details) errorMsg += ` (${err.details})`;
-      }
-
-      if (err.code === '42703') {
-        errorMsg = 'Database Error: The "features" column might be missing. Please ensure you have added the features column to your "trucks" table in Supabase.';
-      }
-
-      setError(errorMsg);
+      setError('Could not save the truck details. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -389,63 +240,48 @@ const TruckModal: React.FC<TruckModalProps> = ({ isOpen, onClose, truck, isDark,
             <h3 className={`text-lg font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>
               Truck Images
             </h3>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
-              {['main_image', 'image1', 'image2', 'image3', 'image4', 'image5', 'image6', 'image7', 'image8', 'image9'].map((field, idx) => (
+            <div className="grid grid-cols-3 gap-4">
+              {['main_image', 'image1', 'image2'].map((field, idx) => (
                 <div key={field}>
                   <label className={labelClass}>
-                    {idx === 0 ? 'Main Image' : `Image ${idx}`}
+                    {idx === 0 ? 'Main Image' : `Image ${idx + 1}`}
                   </label>
                   <div className={`
-                    relative h-32 rounded-xl border-2 border-dashed overflow-hidden
+                    relative h-40 rounded-xl border-2 border-dashed overflow-hidden
                     ${isDark ? 'border-slate-600 hover:border-cyan-500' : 'border-gray-300 hover:border-cyan-500'}
-                    transition-colors group
+                    transition-colors cursor-pointer group
                   `}>
                     {formData[field as keyof typeof formData] ? (
                       <>
                         <img
                           src={formData[field as keyof typeof formData] as string}
-                          alt={`Truck ${idx}`}
+                          alt={`Truck ${idx + 1}`}
                           className="w-full h-full object-cover"
                         />
-                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                          <label className="p-2 rounded-lg bg-white/20 hover:bg-white/30 text-white cursor-pointer transition-colors">
-                            <Upload className="w-4 h-4" />
-                            <input
-                              type="file"
-                              accept="image/*"
-                              onChange={(e) => handleImageUpload(e, field)}
-                              className="hidden"
-                            />
-                          </label>
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveImage(field)}
-                            className="p-2 rounded-lg bg-red-500/50 hover:bg-red-500/70 text-white transition-colors"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                          <span className="text-white text-sm">Click to change</span>
                         </div>
                       </>
                     ) : (
-                      <label className="flex flex-col items-center justify-center h-full p-2 text-center cursor-pointer">
+                      <div className="flex flex-col items-center justify-center h-full">
                         {uploadingImage === field ? (
-                          <Loader2 className="w-6 h-6 text-cyan-500 animate-spin" />
+                          <Loader2 className="w-8 h-8 text-cyan-500 animate-spin" />
                         ) : (
                           <>
-                            <ImagePlus className={`w-6 h-6 mb-1 ${isDark ? 'text-slate-500' : 'text-gray-400'}`} />
-                            <span className={`text-[10px] ${isDark ? 'text-slate-500' : 'text-gray-400'}`}>
-                              Upload
+                            <ImagePlus className={`w-8 h-8 mb-2 ${isDark ? 'text-slate-500' : 'text-gray-400'}`} />
+                            <span className={`text-sm ${isDark ? 'text-slate-500' : 'text-gray-400'}`}>
+                              Upload Image
                             </span>
-                            <input
-                              type="file"
-                              accept="image/*"
-                              onChange={(e) => handleImageUpload(e, field)}
-                              className="hidden"
-                            />
                           </>
                         )}
-                      </label>
+                      </div>
                     )}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => handleImageUpload(e, field)}
+                      className="absolute inset-0 opacity-0 cursor-pointer"
+                    />
                   </div>
                 </div>
               ))}
@@ -509,7 +345,7 @@ const TruckModal: React.FC<TruckModalProps> = ({ isOpen, onClose, truck, isDark,
             </div>
 
             <div>
-              <label className={labelClass}>Price (£)</label>
+              <label className={labelClass}>Price ($)</label>
               <input
                 type="number"
                 value={formData.price}
@@ -628,36 +464,6 @@ const TruckModal: React.FC<TruckModalProps> = ({ isOpen, onClose, truck, isDark,
               placeholder="Enter truck description..."
               className={inputClass}
             />
-          </div>
-
-          {/* Features */}
-          <div>
-            <label className={labelClass}>
-              Key Features
-              <span className={`ml-2 text-xs font-normal ${isDark ? 'text-slate-500' : 'text-gray-400'}`}>
-                (Enter features separated by commas or one per line - Max 20)
-              </span>
-            </label>
-            <textarea
-              value={featuresInput}
-              onChange={(e) => setFeaturesInput(e.target.value)}
-              rows={5}
-              placeholder="e.g., Air bag, Radio, ABS, Climate Control..."
-              className={inputClass}
-            />
-            {featuresInput.trim() !== '' && (
-              <div className="mt-3 flex flex-wrap gap-2">
-                {featuresInput.split(/,|\n/).map(f => f.trim()).filter(f => f !== '').slice(0, 20).map((feature, i) => (
-                  <span
-                    key={i}
-                    className={`px-2 py-1 rounded-lg text-xs font-medium ${isDark ? 'bg-slate-700 text-cyan-400 border border-slate-600' : 'bg-cyan-50 text-cyan-700 border border-cyan-100'
-                      }`}
-                  >
-                    {feature}
-                  </span>
-                ))}
-              </div>
-            )}
           </div>
 
           {/* Error */}

@@ -1,10 +1,10 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Truck, Inquiry } from '@/types';
-import {
-  TrendingUp,
-  TrendingDown,
-  DollarSign,
+import { 
+  TrendingUp, 
+  TrendingDown, 
+  DollarSign, 
   Truck as TruckIcon,
   Package,
   Globe,
@@ -133,7 +133,7 @@ const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ isDark }) => {
           </div>
           <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>Total Fleet Value</p>
           <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-            £{analytics.totalValue.toLocaleString()}
+            ${analytics.totalValue.toLocaleString()}
           </p>
         </div>
 
@@ -151,7 +151,7 @@ const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ isDark }) => {
           </div>
           <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>Revenue</p>
           <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-            £{analytics.revenue.toLocaleString()}
+            ${analytics.revenue.toLocaleString()}
           </p>
         </div>
 
@@ -166,7 +166,7 @@ const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ isDark }) => {
           </div>
           <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>Average Price</p>
           <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-            £{Math.round(analytics.avgPrice).toLocaleString()}
+            ${Math.round(analytics.avgPrice).toLocaleString()}
           </p>
         </div>
 
@@ -214,7 +214,7 @@ const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ isDark }) => {
                       </span>
                     </div>
                     <div className={`h-3 rounded-full overflow-hidden ${isDark ? 'bg-slate-700' : 'bg-gray-100'}`}>
-                      <div
+                      <div 
                         className={`h-full rounded-full bg-gradient-to-r ${brandColors[idx % brandColors.length]} transition-all duration-1000`}
                         style={{ width: `${percentage}%` }}
                       />
@@ -242,7 +242,7 @@ const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ isDark }) => {
                   const available = (analytics.statusCounts.available / total) * 100;
                   const sold = (analytics.statusCounts.sold / total) * 100;
                   const reserved = (analytics.statusCounts.reserved / total) * 100;
-
+                  
                   let offset = 0;
                   const segments = [
                     { value: available, color: '#10B981' },
@@ -372,7 +372,7 @@ const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ isDark }) => {
                   Highest Price
                 </span>
                 <span className={`text-xl font-bold text-green-500`}>
-                  £{analytics.maxPrice.toLocaleString()}
+                  ${analytics.maxPrice.toLocaleString()}
                 </span>
               </div>
             </div>
@@ -382,7 +382,7 @@ const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ isDark }) => {
                   Average Price
                 </span>
                 <span className={`text-xl font-bold text-cyan-500`}>
-                  £{Math.round(analytics.avgPrice).toLocaleString()}
+                  ${Math.round(analytics.avgPrice).toLocaleString()}
                 </span>
               </div>
             </div>
@@ -392,7 +392,7 @@ const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ isDark }) => {
                   Lowest Price
                 </span>
                 <span className={`text-xl font-bold text-orange-500`}>
-                  £{analytics.minPrice.toLocaleString()}
+                  ${analytics.minPrice.toLocaleString()}
                 </span>
               </div>
             </div>
@@ -415,7 +415,7 @@ const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ isDark }) => {
             return (
               <div key={month} className="flex-1 flex flex-col items-center gap-2 group">
                 <div className="relative w-full">
-                  <div
+                  <div 
                     className="w-full bg-gradient-to-t from-cyan-500 to-blue-500 rounded-t-lg transition-all duration-500 group-hover:from-cyan-400 group-hover:to-blue-400"
                     style={{ height: `${height * 2}px` }}
                   />

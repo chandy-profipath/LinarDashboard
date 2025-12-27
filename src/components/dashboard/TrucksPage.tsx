@@ -26,7 +26,7 @@ const TrucksPage: React.FC<TrucksPageProps> = ({ isDark }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedBrand, setSelectedBrand] = useState('');
-  const [priceRange, setPriceRange] = useState({ min: 0, max: 10000000 });
+  const [priceRange, setPriceRange] = useState({ min: 0, max: 500000 });
   const [sortBy, setSortBy] = useState('newest');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [showFilters, setShowFilters] = useState(false);
@@ -93,9 +93,9 @@ const TrucksPage: React.FC<TrucksPageProps> = ({ isDark }) => {
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       result = result.filter(truck =>
-        (truck.brand?.toLowerCase() || '').includes(query) ||
-        (truck.model?.toLowerCase() || '').includes(query) ||
-        (truck.vin?.toLowerCase() || '').includes(query)
+        truck.brand.toLowerCase().includes(query) ||
+        truck.model.toLowerCase().includes(query) ||
+        truck.vin?.toLowerCase().includes(query)
       );
     }
 
@@ -143,53 +143,6 @@ const TrucksPage: React.FC<TrucksPageProps> = ({ isDark }) => {
 
   const handleDelete = async (truck: Truck) => {
     try {
-      // 1. Cleanup Storage
-      if (truck.tuuid) {
-        const cleanTuuid = truck.tuuid.trim().replace(/^\/|\/$/g, '');
-        console.log(`Starting storage cleanup for TUUID: ${cleanTuuid}`);
-
-        // List all files in the truck's folder
-        const { data: files, error: listError } = await supabase.storage
-          .from('truckimages')
-          .list(cleanTuuid);
-
-        let filesToDelete: string[] = [];
-
-        if (listError) {
-          console.error('Error listing files for deletion:', listError);
-        } else if (files && files.length > 0) {
-          filesToDelete = files.map(file => `${cleanTuuid}/${file.name}`);
-        }
-
-        // Also check if we can extract paths from the truck object's image fields
-        const imageFields = ['main_image', 'image1', 'image2', 'image3', 'image4', 'image5', 'image6', 'image7', 'image8', 'image9'];
-        imageFields.forEach(field => {
-          const url = (truck as any)[field];
-          if (url && url.includes('/truckimages/')) {
-            const path = url.split('/truckimages/')[1].split('?')[0];
-            if (!filesToDelete.includes(path)) {
-              filesToDelete.push(path);
-            }
-          }
-        });
-
-        if (filesToDelete.length > 0) {
-          console.log(`Files to delete in storage:`, filesToDelete);
-          const { error: deleteStorageError } = await supabase.storage
-            .from('truckimages')
-            .remove(filesToDelete);
-
-          if (deleteStorageError) {
-            console.error('Error deleting files from storage:', deleteStorageError);
-          } else {
-            console.log('Storage cleanup successful');
-          }
-        } else {
-          console.log('No files found in storage for this truck.');
-        }
-      }
-
-      // 2. Delete Database Record
       const { error } = await supabase
         .from('trucks')
         .delete()
@@ -198,7 +151,6 @@ const TrucksPage: React.FC<TrucksPageProps> = ({ isDark }) => {
       if (error) throw error;
       setTrucks(prev => prev.filter(t => t.id !== truck.id));
       setDeleteConfirm(null);
-      toast.success("Truck and associated images deleted successfully.");
     } catch (error) {
       console.error('Error deleting truck:', error);
       toast.error("Could not delete the truck. Please try again.");
@@ -337,14 +289,14 @@ const TrucksPage: React.FC<TrucksPageProps> = ({ isDark }) => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-slate-300' : 'text-gray-700'}`}>
-                  Price Range: £{priceRange.min.toLocaleString()} - {priceRange.max >= 10000000 ? 'Any' : `£${priceRange.max.toLocaleString()}`}
+                  Price Range: ${priceRange.min.toLocaleString()} - ${priceRange.max.toLocaleString()}
                 </label>
                 <div className="flex gap-4">
                   <input
                     type="range"
                     min="0"
-                    max="10000000"
-                    step="50000"
+                    max="500000"
+                    step="10000"
                     value={priceRange.min}
                     onChange={(e) => setPriceRange(prev => ({ ...prev, min: parseInt(e.target.value) }))}
                     className="flex-1 accent-cyan-500"
@@ -352,8 +304,8 @@ const TrucksPage: React.FC<TrucksPageProps> = ({ isDark }) => {
                   <input
                     type="range"
                     min="0"
-                    max="10000000"
-                    step="50000"
+                    max="500000"
+                    step="10000"
                     value={priceRange.max}
                     onChange={(e) => setPriceRange(prev => ({ ...prev, max: parseInt(e.target.value) }))}
                     className="flex-1 accent-cyan-500"
@@ -365,7 +317,7 @@ const TrucksPage: React.FC<TrucksPageProps> = ({ isDark }) => {
                   onClick={() => {
                     setSearchQuery('');
                     setSelectedBrand('');
-                    setPriceRange({ min: 0, max: 10000000 });
+                    setPriceRange({ min: 0, max: 500000 });
                     setSortBy('newest');
                   }}
                   className={`

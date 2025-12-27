@@ -1,14 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Truck, DashboardStats, Inquiry } from '@/types';
-import TruckViewModal from './TruckViewModal';
 import StatCard from './StatCard';
 import RecentActivity from './RecentActivity';
 import WelcomeBanner from './WelcomeBanner';
-import {
-  Truck as TruckIcon,
-  DollarSign,
-  MessageSquare,
+import { 
+  Truck as TruckIcon, 
+  DollarSign, 
+  MessageSquare, 
   CheckCircle,
   Clock,
   Package,
@@ -33,8 +32,6 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ isDark }) => {
   const [recentTrucks, setRecentTrucks] = useState<Truck[]>([]);
   const [recentInquiries, setRecentInquiries] = useState<Inquiry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedTruck, setSelectedTruck] = useState<Truck | null>(null);
-  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
 
   useEffect(() => {
     fetchDashboardData();
@@ -144,7 +141,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ isDark }) => {
         <StatCard
           title="Total Revenue"
           value={stats.totalRevenue}
-          prefix="£"
+          prefix="$"
           icon={DollarSign}
           color="purple"
           trend={23}
@@ -168,7 +165,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ isDark }) => {
             </div>
           </div>
         </div>
-
+        
         <div className={`
           p-5 rounded-2xl
           ${isDark ? 'bg-slate-800/50 border border-slate-700/50' : 'bg-white border border-gray-200'}
@@ -183,7 +180,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ isDark }) => {
             </div>
           </div>
         </div>
-
+        
         <div className={`
           p-5 rounded-2xl
           ${isDark ? 'bg-slate-800/50 border border-slate-700/50' : 'bg-white border border-gray-200'}
@@ -214,19 +211,15 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ isDark }) => {
           </div>
           <div className="p-4 space-y-3">
             {recentTrucks.map((truck) => (
-              <div
+              <div 
                 key={truck.id}
-                onClick={() => {
-                  setSelectedTruck(truck);
-                  setIsViewModalOpen(true);
-                }}
                 className={`
                   flex items-center gap-4 p-3 rounded-xl transition-colors cursor-pointer
                   ${isDark ? 'hover:bg-slate-700/50' : 'hover:bg-gray-50'}
                 `}
               >
-                <img
-                  src={truck.main_image}
+                <img 
+                  src={truck.main_image} 
                   alt={truck.model}
                   className="w-16 h-12 object-cover rounded-lg"
                 />
@@ -235,20 +228,20 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ isDark }) => {
                     {truck.brand} {truck.model}
                   </p>
                   <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
-                    {truck.year} • {truck.mileage.toLocaleString()} km
+                    {truck.year} • {truck.mileage.toLocaleString()} mi
                   </p>
                 </div>
                 <div className="text-right">
                   <p className="font-semibold text-cyan-400">
-                    £{truck.price.toLocaleString()}
+                    ${truck.price.toLocaleString()}
                   </p>
                   <span className={`
                     text-xs px-2 py-0.5 rounded-full
-                    ${truck.status === 'available'
-                      ? 'bg-green-500/20 text-green-400'
+                    ${truck.status === 'available' 
+                      ? 'bg-green-500/20 text-green-400' 
                       : truck.status === 'sold'
-                        ? 'bg-red-500/20 text-red-400'
-                        : 'bg-yellow-500/20 text-yellow-400'
+                      ? 'bg-red-500/20 text-red-400'
+                      : 'bg-yellow-500/20 text-yellow-400'
                     }
                   `}>
                     {truck.status}
@@ -273,7 +266,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ isDark }) => {
             {recentInquiries.map((inquiry) => {
               const ServiceIcon = getServiceIcon(inquiry.service_type);
               return (
-                <div
+                <div 
                   key={inquiry.id}
                   className={`
                     flex items-center gap-4 p-3 rounded-xl transition-colors cursor-pointer
@@ -282,11 +275,11 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ isDark }) => {
                 >
                   <div className={`
                     w-10 h-10 rounded-xl flex items-center justify-center
-                    ${inquiry.service_type === 'truck_purchase'
+                    ${inquiry.service_type === 'truck_purchase' 
                       ? 'bg-cyan-500/20 text-cyan-400'
                       : inquiry.service_type === 'parcel_delivery'
-                        ? 'bg-pink-500/20 text-pink-400'
-                        : 'bg-blue-500/20 text-blue-400'
+                      ? 'bg-pink-500/20 text-pink-400'
+                      : 'bg-blue-500/20 text-blue-400'
                     }
                   `}>
                     <ServiceIcon className="w-5 h-5" />
@@ -322,9 +315,9 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ isDark }) => {
             const height = Math.random() * 80 + 20;
             return (
               <div key={month} className="flex-1 flex flex-col items-center gap-2">
-                <div
+                <div 
                   className="w-full bg-gradient-to-t from-cyan-500 to-blue-500 rounded-t-lg transition-all duration-500 hover:from-cyan-400 hover:to-blue-400"
-                  style={{
+                  style={{ 
                     height: `${height}%`,
                     animationDelay: `${i * 100}ms`
                   }}
@@ -337,14 +330,6 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ isDark }) => {
           })}
         </div>
       </div>
-
-      {/* View Modal */}
-      <TruckViewModal
-        isOpen={isViewModalOpen}
-        onClose={() => setIsViewModalOpen(false)}
-        truck={selectedTruck}
-        isDark={isDark}
-      />
     </div>
   );
 };
