@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { LucideIcon, TrendingUp, TrendingDown } from 'lucide-react';
+import { LucideIcon, TrendingUp, TrendingDown, PoundSterling } from 'lucide-react';
 
 interface StatCardProps {
   title: string;
@@ -29,7 +29,7 @@ const StatCard: React.FC<StatCardProps> = ({
     const steps = 60;
     const increment = value / steps;
     let current = 0;
-    
+
     const timer = setInterval(() => {
       current += increment;
       if (current >= value) {
@@ -85,8 +85,10 @@ const StatCard: React.FC<StatCardProps> = ({
   const colors = colorClasses[color];
 
   const formatValue = (val: number) => {
-    if (prefix === '$') {
-      return val.toLocaleString('en-US');
+    if (prefix === '£') {
+      if (val >= 1000000) return `£${(val / 1000000).toFixed(1)}M`;
+      if (val >= 1000) return `£${(val / 1000).toFixed(1)}K`;
+      return `£${val}`;
     }
     return val.toLocaleString();
   };
@@ -94,53 +96,50 @@ const StatCard: React.FC<StatCardProps> = ({
   return (
     <div className={`
       relative overflow-hidden rounded-2xl p-6
-      ${isDark 
-        ? 'bg-slate-800/50 border border-slate-700/50' 
-        : 'bg-white border border-gray-200'
-      }
-      backdrop-blur-xl shadow-xl ${colors.shadow}
-      hover:scale-[1.02] transition-all duration-300
-      group
+      ${isDark ? 'bg-slate-800/80 backdrop-blur-xl shadow-xl border border-slate-700/50' : 'bg-white shadow-lg border border-gray-100'}
+      hover:scale-[1.02] transition-all duration-300 group
     `}>
-      {/* Background Gradient */}
-      <div className={`absolute inset-0 bg-gradient-to-br ${colors.bg} opacity-50`} />
-      
-      {/* Content */}
-      <div className="relative">
-        <div className="flex items-start justify-between mb-4">
+      {/* Background Glow */}
+      <div className={`
+        absolute inset-0 bg-gradient-to-br ${colors.bg} opacity-50
+        group-hover:opacity-100 transition-opacity duration-500
+      `} />
+
+      <div className="relative flex items-center justify-between mb-4">
+        <div className={`
+          w-12 h-12 rounded-xl bg-gradient-to-br ${colors.icon}
+          flex items-center justify-center shadow-lg ${colors.shadow}
+          group-hover:scale-110 transition-transform duration-300
+        `}>
+          <Icon className="w-6 h-6 text-white" />
+        </div>
+        {trend && (
           <div className={`
-            w-12 h-12 rounded-xl bg-gradient-to-br ${colors.icon}
-            flex items-center justify-center shadow-lg ${colors.shadow}
-            group-hover:scale-110 transition-transform duration-300
+            flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium
+            ${trend > 0
+              ? 'bg-green-500/10 text-green-400'
+              : 'bg-red-500/10 text-red-400'}
           `}>
-            <Icon className="w-6 h-6 text-white" />
+            {trend > 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+            {Math.abs(trend)}%
           </div>
-          
-          {trend !== undefined && (
-            <div className={`
-              flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium
-              ${trend >= 0 
-                ? 'bg-emerald-500/20 text-emerald-400' 
-                : 'bg-red-500/20 text-red-400'
-              }
-            `}>
-              {trend >= 0 ? (
-                <TrendingUp className="w-3 h-3" />
-              ) : (
-                <TrendingDown className="w-3 h-3" />
-              )}
-              {Math.abs(trend)}%
-            </div>
+        )}
+      </div>
+
+      <div className="relative">
+        <p className={`text-sm font-medium mb-1 ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
+          {title}
+        </p>
+        <div className="flex items-baseline gap-1">
+          <h3 className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+            {formatValue(displayValue)}
+          </h3>
+          {suffix && (
+            <span className={`text-lg font-medium ${isDark ? 'text-slate-500' : 'text-gray-400'}`}>
+              {suffix}
+            </span>
           )}
         </div>
-
-        <h3 className={`text-sm font-medium mb-1 ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
-          {title}
-        </h3>
-        
-        <p className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-          {prefix}{formatValue(displayValue)}{suffix}
-        </p>
       </div>
     </div>
   );

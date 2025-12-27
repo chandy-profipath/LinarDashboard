@@ -33,7 +33,7 @@ const RecentActivity: React.FC<RecentActivityProps> = ({ isDark }) => {
       id: '3',
       type: 'sale',
       title: 'Truck Sold',
-      description: 'MAN TGX sold for $155,000',
+      description: 'MAN TGX sold for £155,000',
       time: '5 hours ago'
     },
     {

@@ -30,8 +30,17 @@ const TruckModal: React.FC<TruckModalProps> = ({ isOpen, onClose, truck, isDark,
     status: 'available' as 'available' | 'sold' | 'reserved',
     main_image: '',
     image1: '',
-    image2: ''
+    image2: '',
+    image3: '',
+    image4: '',
+    image5: '',
+    image6: '',
+    image7: '',
+    image8: '',
+    image9: '',
+    features: [] as string[]
   });
+  const [featuresInput, setFeaturesInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [uploadingImage, setUploadingImage] = useState<string | null>(null);
   const [error, setError] = useState('');
@@ -40,7 +49,7 @@ const TruckModal: React.FC<TruckModalProps> = ({ isOpen, onClose, truck, isDark,
     if (isOpen) {
       if (truck) {
         setFormData({
-          tuuid: truck.tuuid || crypto.randomUUID(), // Fallback for existing trucks
+          tuuid: truck.tuuid || crypto.randomUUID(),
           brand: TRUCK_BRANDS.includes(truck.brand as any) ? truck.brand : 'Custom',
           customBrand: TRUCK_BRANDS.includes(truck.brand as any) ? '' : truck.brand,
           model: truck.model,
@@ -57,8 +66,17 @@ const TruckModal: React.FC<TruckModalProps> = ({ isOpen, onClose, truck, isDark,
           status: truck.status,
           main_image: truck.main_image || '',
           image1: truck.image1 || '',
-          image2: truck.image2 || ''
+          image2: truck.image2 || '',
+          image3: truck.image3 || '',
+          image4: truck.image4 || '',
+          image5: truck.image5 || '',
+          image6: truck.image6 || '',
+          image7: truck.image7 || '',
+          image8: truck.image8 || '',
+          image9: truck.image9 || '',
+          features: truck.features || []
         });
+        setFeaturesInput((truck.features || []).join('\n'));
       } else {
         setFormData({
           tuuid: crypto.randomUUID(),
@@ -78,8 +96,17 @@ const TruckModal: React.FC<TruckModalProps> = ({ isOpen, onClose, truck, isDark,
           status: 'available',
           main_image: '',
           image1: '',
-          image2: ''
+          image2: '',
+          image3: '',
+          image4: '',
+          image5: '',
+          image6: '',
+          image7: '',
+          image8: '',
+          image9: '',
+          features: []
         });
+        setFeaturesInput('');
       }
     }
   }, [truck, isOpen]);
@@ -88,52 +115,114 @@ const TruckModal: React.FC<TruckModalProps> = ({ isOpen, onClose, truck, isDark,
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // Immediate preview
+    const objectUrl = URL.createObjectURL(file);
+    setFormData(prev => ({ ...prev, [imageField]: objectUrl })); // Show preview
+
     if (!formData.tuuid) {
       setError('Please close and reopen the form to try again.');
       return;
     }
 
-    // Immediate preview
-    const objectUrl = URL.createObjectURL(file);
-    setFormData(prev => ({ ...prev, [imageField]: objectUrl })); // Show preview
-
-    setUploadingImage(imageField);
-    setError(''); // Clear previous errors
-
     try {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${imageField}.${fileExt}`;
-      const filePath = `${formData.tuuid}/${fileName}`;
+      setUploadingImage(imageField);
+      setError('');
 
-      // Upload to Supabase
-      const { data, error: uploadError } = await supabase.storage
+      const cleanTuuid = formData.tuuid.trim().replace(/^\/|\/$/g, '');
+      const { data: existingFiles, error: listError } = await supabase.storage
         .from('truckimages')
-        .upload(filePath, file, {
-          cacheControl: '3600',
-          upsert: true
-        });
+        .list(cleanTuuid);
 
-      if (uploadError) {
-        throw uploadError;
+      let filesToCleanup: string[] = [];
+      if (!listError && existingFiles) {
+        filesToCleanup = existingFiles
+          .filter(f => f.name.startsWith(`${imageField}.`))
+          .map(f => `${cleanTuuid}/${f.name}`);
       }
 
-      // Get Public URL
-      const { data: UrlData } = supabase.storage
+      // Fallback cleanup using exact URL path
+      const currentUrl = formData[imageField as keyof typeof formData] as string;
+      if (currentUrl && currentUrl.includes('/truckimages/')) {
+        const urlParts = currentUrl.split('/truckimages/');
+        if (urlParts.length > 1) {
+          const urlPath = urlParts[1].split('?')[0];
+          if (!filesToCleanup.includes(urlPath)) {
+            filesToCleanup.push(urlPath);
+          }
+        }
+      }
+
+      if (filesToCleanup.length > 0) {
+        await supabase.storage.from('truckimages').remove(filesToCleanup);
+      }
+
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${imageField}.${fileExt}`;
+      const filePath = `${cleanTuuid}/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('truckimages')
+        .upload(filePath, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
         .from('truckimages')
         .getPublicUrl(filePath);
 
-      if (!UrlData.publicUrl) {
-        throw new Error('Could not get image link. Please try again.');
-      }
-
-      // Update state with valid Public URL
-      setFormData(prev => ({ ...prev, [imageField]: UrlData.publicUrl }));
-
+      setFormData(prev => ({ ...prev, [imageField]: publicUrl }));
     } catch (err: any) {
       console.error('Upload error:', err);
-      // Revert the preview if upload failed
+      setError(`Failed to upload image: ${err.message}`);
+    } finally {
+      setUploadingImage(null);
+    }
+  };
+
+  const handleRemoveImage = async (imageField: string) => {
+    if (!formData.tuuid) return;
+
+    try {
+      setUploadingImage(imageField);
+      const cleanTuuid = formData.tuuid.trim().replace(/^\/|\/$/g, '');
+      let filesToCleanup: string[] = [];
+
+      const currentUrl = formData[imageField as keyof typeof formData] as string;
+      if (currentUrl && currentUrl.includes('/truckimages/')) {
+        const urlParts = currentUrl.split('/truckimages/');
+        if (urlParts.length > 1) {
+          const urlPath = urlParts[1].split('?')[0];
+          filesToCleanup.push(urlPath);
+        }
+      }
+
+      const { data: files, error: listError } = await supabase.storage
+        .from('truckimages')
+        .list(cleanTuuid);
+
+      if (!listError && files) {
+        files.forEach(f => {
+          if (f.name.startsWith(`${imageField}.`)) {
+            const path = `${cleanTuuid}/${f.name}`;
+            if (!filesToCleanup.includes(path)) {
+              filesToCleanup.push(path);
+            }
+          }
+        });
+      }
+
+      if (filesToCleanup.length > 0) {
+        const { error: removeError } = await supabase.storage
+          .from('truckimages')
+          .remove(filesToCleanup);
+        if (removeError) throw removeError;
+      }
+
       setFormData(prev => ({ ...prev, [imageField]: '' }));
-      setError('Could not upload the image. Please try another one.');
+    } catch (err: any) {
+      console.error('Removal error:', err);
+      setFormData(prev => ({ ...prev, [imageField]: '' }));
+      setError(`Notice: Image cleared from form. Storage cleanup result: ${err.message || 'Check console'}`);
     } finally {
       setUploadingImage(null);
     }
@@ -146,6 +235,12 @@ const TruckModal: React.FC<TruckModalProps> = ({ isOpen, onClose, truck, isDark,
 
     try {
       const brand = formData.brand === 'Custom' ? formData.customBrand : formData.brand;
+
+      const finalFeatures = featuresInput
+        .split(/,|\n/)
+        .map(f => f.trim())
+        .filter(f => f !== '')
+        .slice(0, 20);
 
       const truckData = {
         tuuid: formData.tuuid,
@@ -165,6 +260,14 @@ const TruckModal: React.FC<TruckModalProps> = ({ isOpen, onClose, truck, isDark,
         main_image: formData.main_image,
         image1: formData.image1,
         image2: formData.image2,
+        image3: formData.image3,
+        image4: formData.image4,
+        image5: formData.image5,
+        image6: formData.image6,
+        image7: formData.image7,
+        image8: formData.image8,
+        image9: formData.image9,
+        features: finalFeatures,
         updated_at: new Date().toISOString()
       };
 
@@ -184,7 +287,25 @@ const TruckModal: React.FC<TruckModalProps> = ({ isOpen, onClose, truck, isDark,
       onSave();
       onClose();
     } catch (err: any) {
-      setError('Could not save the truck details. Please try again.');
+      console.error('Detailed Save Error:', {
+        message: err.message,
+        details: err.details,
+        hint: err.hint,
+        code: err.code,
+        fullError: err
+      });
+
+      let errorMsg = 'Could not save the truck details.';
+      if (err.message) {
+        errorMsg += ` Reason: ${err.message}`;
+        if (err.details) errorMsg += ` (${err.details})`;
+      }
+
+      if (err.code === '42703') {
+        errorMsg = 'Database Error: The "features" column might be missing. Please ensure you have added the features column to your "trucks" table in Supabase.';
+      }
+
+      setError(errorMsg);
     } finally {
       setIsLoading(false);
     }
@@ -240,48 +361,78 @@ const TruckModal: React.FC<TruckModalProps> = ({ isOpen, onClose, truck, isDark,
             <h3 className={`text-lg font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>
               Truck Images
             </h3>
-            <div className="grid grid-cols-3 gap-4">
-              {['main_image', 'image1', 'image2'].map((field, idx) => (
-                <div key={field}>
-                  <label className={labelClass}>
-                    {idx === 0 ? 'Main Image' : `Image ${idx + 1}`}
-                  </label>
-                  <div className={`
-                    relative h-40 rounded-xl border-2 border-dashed overflow-hidden
-                    ${isDark ? 'border-slate-600 hover:border-cyan-500' : 'border-gray-300 hover:border-cyan-500'}
-                    transition-colors cursor-pointer group
-                  `}>
-                    {formData[field as keyof typeof formData] ? (
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
+              {[
+                { id: 'main_image', label: 'Main' },
+                { id: 'image1', label: 'Img 1' },
+                { id: 'image2', label: 'Img 2' },
+                { id: 'image3', label: 'Img 3' },
+                { id: 'image4', label: 'Img 4' },
+                { id: 'image5', label: 'Img 5' },
+                { id: 'image6', label: 'Img 6' },
+                { id: 'image7', label: 'Img 7' },
+                { id: 'image8', label: 'Img 8' },
+                { id: 'image9', label: 'Img 9' }
+              ].map((img) => (
+                <div key={img.id} className="space-y-2">
+                  <label className="text-xs font-medium text-slate-400">{img.label}</label>
+                  <div className="relative group aspect-square">
+                    {formData[img.id as keyof typeof formData] ? (
                       <>
                         <img
-                          src={formData[field as keyof typeof formData] as string}
-                          alt={`Truck ${idx + 1}`}
-                          className="w-full h-full object-cover"
+                          src={formData[img.id as keyof typeof formData] as string}
+                          alt={img.label}
+                          className="w-full h-full object-cover rounded-xl border border-slate-700"
                         />
-                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                          <span className="text-white text-sm">Click to change</span>
+                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl flex items-center justify-center gap-2">
+                          <label className="cursor-pointer p-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors">
+                            <Upload className="w-4 h-4 text-white" />
+                            <input
+                              type="file"
+                              className="hidden"
+                              accept="image/*"
+                              onChange={(e) => handleImageUpload(e, img.id)}
+                              disabled={uploadingImage !== null}
+                            />
+                          </label>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveImage(img.id)}
+                            className="p-2 bg-red-500/20 hover:bg-red-500/40 rounded-lg transition-colors"
+                            disabled={uploadingImage !== null}
+                          >
+                            <X className="w-4 h-4 text-red-400" />
+                          </button>
                         </div>
                       </>
                     ) : (
-                      <div className="flex flex-col items-center justify-center h-full">
-                        {uploadingImage === field ? (
-                          <Loader2 className="w-8 h-8 text-cyan-500 animate-spin" />
+                      <label className={`
+                      flex flex-col items-center justify-center w-full h-full
+                      border-2 border-dashed rounded-xl cursor-pointer
+                      transition-all duration-200
+                      ${isDark
+                          ? 'border-slate-700 hover:border-cyan-500/50 hover:bg-slate-800/50'
+                          : 'border-gray-200 hover:border-cyan-500/50 hover:bg-gray-50'
+                        }
+                      ${uploadingImage === img.id ? 'opacity-50 cursor-not-allowed' : ''}
+                    `}>
+                        {uploadingImage === img.id ? (
+                          <Loader2 className="w-6 h-6 text-cyan-500 animate-spin" />
                         ) : (
                           <>
-                            <ImagePlus className={`w-8 h-8 mb-2 ${isDark ? 'text-slate-500' : 'text-gray-400'}`} />
-                            <span className={`text-sm ${isDark ? 'text-slate-500' : 'text-gray-400'}`}>
-                              Upload Image
-                            </span>
+                            <ImagePlus className="w-6 h-6 text-slate-400 mb-1" />
+                            <span className="text-[10px] text-slate-500">Add</span>
                           </>
                         )}
-                      </div>
+                        <input
+                          type="file"
+                          className="hidden"
+                          accept="image/*"
+                          onChange={(e) => handleImageUpload(e, img.id)}
+                          disabled={uploadingImage !== null}
+                        />
+                      </label>
                     )}
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => handleImageUpload(e, field)}
-                      className="absolute inset-0 opacity-0 cursor-pointer"
-                    />
                   </div>
                 </div>
               ))}
@@ -345,14 +496,15 @@ const TruckModal: React.FC<TruckModalProps> = ({ isOpen, onClose, truck, isDark,
             </div>
 
             <div>
-              <label className={labelClass}>Price ($)</label>
+              <label className={labelClass}>Price (£)</label>
               <input
                 type="number"
                 value={formData.price}
-                onChange={(e) => setFormData(prev => ({ ...prev, price: parseFloat(e.target.value) }))}
+                onChange={(e) => setFormData(prev => ({ ...prev, price: Number(e.target.value) }))}
                 min="0"
                 step="1"
                 className={inputClass}
+                placeholder="0"
                 required
               />
             </div>
@@ -464,6 +616,36 @@ const TruckModal: React.FC<TruckModalProps> = ({ isOpen, onClose, truck, isDark,
               placeholder="Enter truck description..."
               className={inputClass}
             />
+          </div>
+
+          {/* Features */}
+          <div>
+            <label className={labelClass}>
+              Key Features
+              <span className={`ml-2 text-xs font-normal ${isDark ? 'text-slate-500' : 'text-gray-400'}`}>
+                (Enter features separated by commas or one per line - Max 20)
+              </span>
+            </label>
+            <textarea
+              value={featuresInput}
+              onChange={(e) => setFeaturesInput(e.target.value)}
+              rows={5}
+              placeholder="e.g., Air bag, Radio, ABS, Climate Control..."
+              className={inputClass}
+            />
+            {featuresInput.trim() !== '' && (
+              <div className="mt-3 flex flex-wrap gap-2">
+                {featuresInput.split(/,|\n/).map(f => f.trim()).filter(f => f !== '').slice(0, 20).map((feature, i) => (
+                  <span
+                    key={i}
+                    className={`px-2 py-1 rounded-lg text-xs font-medium ${isDark ? 'bg-slate-700 text-cyan-400 border border-slate-600' : 'bg-cyan-50 text-cyan-700 border border-cyan-100'
+                      }`}
+                  >
+                    {feature}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Error */}

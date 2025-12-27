@@ -228,12 +228,12 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ isDark }) => {
                     {truck.brand} {truck.model}
                   </p>
                   <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
-                    {truck.year} • {truck.mileage.toLocaleString()} mi
+                    {truck.year} • {truck.mileage.toLocaleString()} km
                   </p>
                 </div>
                 <div className="text-right">
                   <p className="font-semibold text-cyan-400">
-                    ${truck.price.toLocaleString()}
+                    £{truck.price.toLocaleString()}
                   </p>
                   <span className={`
                     text-xs px-2 py-0.5 rounded-full

@@ -24,22 +24,22 @@ const TruckCard: React.FC<TruckCardProps> = ({ truck, isDark, onEdit, onDelete, 
     <div className={`
       group rounded-2xl overflow-hidden transition-all duration-300
       hover:scale-[1.02] hover:shadow-2xl
-      ${isDark 
-        ? 'bg-slate-800/50 border border-slate-700/50 hover:border-cyan-500/50 hover:shadow-cyan-500/10' 
+      ${isDark
+        ? 'bg-slate-800/50 border border-slate-700/50 hover:border-cyan-500/50 hover:shadow-cyan-500/10'
         : 'bg-white border border-gray-200 hover:border-cyan-500/50 hover:shadow-cyan-500/20'
       }
     `}>
       {/* Image Container */}
       <div className="relative h-48 overflow-hidden">
-        <img 
-          src={truck.main_image} 
+        <img
+          src={truck.main_image}
           alt={`${truck.brand} ${truck.model}`}
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
         />
-        
+
         {/* Gradient Overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-        
+
         {/* Status Badge */}
         <div className={`
           absolute top-3 left-3 px-3 py-1 rounded-full text-xs font-semibold
@@ -80,7 +80,7 @@ const TruckCard: React.FC<TruckCardProps> = ({ truck, isDark, onEdit, onDelete, 
         {/* Price */}
         <div className="absolute bottom-3 right-3">
           <span className="text-xl font-bold text-white drop-shadow-lg">
-            ${truck.price.toLocaleString()}
+            £{truck.price.toLocaleString()}
           </span>
         </div>
       </div>
@@ -102,7 +102,7 @@ const TruckCard: React.FC<TruckCardProps> = ({ truck, isDark, onEdit, onDelete, 
           <div className="flex items-center gap-2">
             <Gauge className={`w-4 h-4 ${isDark ? 'text-slate-400' : 'text-gray-400'}`} />
             <span className={`text-sm ${isDark ? 'text-slate-300' : 'text-gray-600'}`}>
-              {(truck.mileage / 1000).toFixed(0)}k mi
+              {(truck.mileage / 1000).toFixed(0)}k km
             </span>
           </div>
           <div className="flex items-center gap-2">

@@ -133,7 +133,7 @@ const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ isDark }) => {
           </div>
           <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>Total Fleet Value</p>
           <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-            ${analytics.totalValue.toLocaleString()}
+            £{analytics.totalValue.toLocaleString()}
           </p>
         </div>
 
@@ -151,7 +151,7 @@ const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ isDark }) => {
           </div>
           <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>Revenue</p>
           <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-            ${analytics.revenue.toLocaleString()}
+            £{analytics.revenue.toLocaleString()}
           </p>
         </div>
 
@@ -166,7 +166,7 @@ const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ isDark }) => {
           </div>
           <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>Average Price</p>
           <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-            ${Math.round(analytics.avgPrice).toLocaleString()}
+            £{Math.round(analytics.avgPrice).toLocaleString()}
           </p>
         </div>
 
@@ -372,7 +372,7 @@ const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ isDark }) => {
                   Highest Price
                 </span>
                 <span className={`text-xl font-bold text-green-500`}>
-                  ${analytics.maxPrice.toLocaleString()}
+                  £{analytics.maxPrice.toLocaleString()}
                 </span>
               </div>
             </div>
@@ -382,7 +382,7 @@ const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ isDark }) => {
                   Average Price
                 </span>
                 <span className={`text-xl font-bold text-cyan-500`}>
-                  ${Math.round(analytics.avgPrice).toLocaleString()}
+                  £{Math.round(analytics.avgPrice).toLocaleString()}
                 </span>
               </div>
             </div>
@@ -392,7 +392,7 @@ const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ isDark }) => {
                   Lowest Price
                 </span>
                 <span className={`text-xl font-bold text-orange-500`}>
-                  ${analytics.minPrice.toLocaleString()}
+                  £{analytics.minPrice.toLocaleString()}
                 </span>
               </div>
             </div>
